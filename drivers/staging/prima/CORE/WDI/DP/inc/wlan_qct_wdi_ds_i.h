@@ -93,7 +93,7 @@ typedef enum
 
 } DTI_TRACE_LEVEL;
 
-WPT_STATIC WPT_INLINE void DTI_TRACE ( DTI_TRACE_LEVEL level, ...) { };
+WPT_STATIC void DTI_TRACE ( DTI_TRACE_LEVEL level, ...) { };
 
 /* !!! MAX NUM STA is not identified yet, 16 is correct value,
    but need to get from correct common def
@@ -155,14 +155,14 @@ typedef struct
   WDI_DS_staIdxPerBssIdxType       staIdxPerBssIdxTable[WDI_DS_MAX_SUPPORTED_BSS];
 } WDI_DS_ClientDataType;
 
-WPT_STATIC WPT_INLINE void WDI_GetBDPointers(wpt_packet *pFrame, void **pVirt, void **pPhys)
+WPT_STATIC void WDI_GetBDPointers(wpt_packet *pFrame, void **pVirt, void **pPhys)
 {
   *pVirt = WPAL_PACKET_GET_BD_POINTER(pFrame);
   *pPhys = WPAL_PACKET_GET_BD_PHYS(pFrame);
 }
 
 
-WPT_STATIC WPT_INLINE void WDI_SetBDPointers(wpt_packet *pFrame, void *pVirt, void *pPhys)
+WPT_STATIC void WDI_SetBDPointers(wpt_packet *pFrame, void *pVirt, void *pPhys)
 {
   WPAL_PACKET_SET_BD_POINTER(pFrame, pVirt);
   WPAL_PACKET_SET_BD_PHYS(pFrame, pPhys);
