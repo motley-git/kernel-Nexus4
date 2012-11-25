@@ -57,6 +57,8 @@ allowed_warnings = set([
     "wlan_qct_wdi_ds_i.h:158",
     "wlan_qct_wdi_ds_i.h:165",
     "transport.c:653",
+    "fsync_control.c:22",
+    "err.h:24",
  ])
 
 # Capture the name of the object file, can find it.
