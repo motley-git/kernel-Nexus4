@@ -71,7 +71,7 @@ static struct mutex set_speed_lock;
 static u64 hispeed_freq;
 
 /* Go to hi speed when CPU load at or above this value. */
-#define DEFAULT_GO_HISPEED_LOAD 90
+#define DEFAULT_GO_HISPEED_LOAD 80
 static unsigned long go_hispeed_load;
 
 /*
