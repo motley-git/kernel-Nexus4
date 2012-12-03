@@ -827,7 +827,7 @@ static void __init bus_init(const struct l2_level *l2_level)
 
 #ifdef CONFIG_USERSPACE_VOLTAGE_CONTROL
 
-#define HFPLL_MIN_VDD		 800000
+#define HFPLL_MIN_VDD		 700000
 #define HFPLL_MAX_VDD		1300000
 
 ssize_t acpuclk_get_vdd_levels_str(char *buf) {
@@ -838,9 +838,11 @@ ssize_t acpuclk_get_vdd_levels_str(char *buf) {
 		mutex_lock(&driver_lock);
 
 		for (i = 0; drv.acpu_freq_tbl[i].speed.khz; i++) {
-			/* updated to use uv required by 8x60 architecture - faux123 */
-			len += sprintf(buf + len, "%8lu: %8d\n", drv.acpu_freq_tbl[i].speed.khz,
-				drv.acpu_freq_tbl[i].vdd_core );
+			if (drv.acpu_freq_tbl[i].use_for_scaling) {
+				/* updated to use uv required by 8x60 architecture - faux123 */
+				len += sprintf(buf + len, "%8lu: %8d\n", drv.acpu_freq_tbl[i].speed.khz,
+						drv.acpu_freq_tbl[i].vdd_core );
+			}
 		}
 
 		mutex_unlock(&driver_lock);
@@ -857,16 +859,18 @@ void acpuclk_set_vdd(unsigned int khz, int vdd_uv) {
 	mutex_lock(&driver_lock);
 
 	for (i = 0; drv.acpu_freq_tbl[i].speed.khz; i++) {
-		if (khz == 0)
-			new_vdd_uv = min(max((unsigned int)(drv.acpu_freq_tbl[i].vdd_core + vdd_uv),
-				(unsigned int)HFPLL_MIN_VDD), (unsigned int)HFPLL_MAX_VDD);
-		else if ( drv.acpu_freq_tbl[i].speed.khz == khz)
-			new_vdd_uv = min(max((unsigned int)vdd_uv,
-				(unsigned int)HFPLL_MIN_VDD), (unsigned int)HFPLL_MAX_VDD);
-		else 
-			continue;
+		if (drv.acpu_freq_tbl[i].use_for_scaling) {
+			if (khz == 0)
+				new_vdd_uv = min(max((unsigned int)(drv.acpu_freq_tbl[i].vdd_core + vdd_uv),
+					(unsigned int)HFPLL_MIN_VDD), (unsigned int)HFPLL_MAX_VDD);
+			else if ( drv.acpu_freq_tbl[i].speed.khz == khz)
+				new_vdd_uv = min(max((unsigned int)vdd_uv,
+					(unsigned int)HFPLL_MIN_VDD), (unsigned int)HFPLL_MAX_VDD);
+			else
+				continue;
 
-		drv.acpu_freq_tbl[i].vdd_core = new_vdd_uv;
+			drv.acpu_freq_tbl[i].vdd_core = new_vdd_uv;
+		}
 	}
 	pr_warn("User voltage table modified!\n");
 	mutex_unlock(&driver_lock);
