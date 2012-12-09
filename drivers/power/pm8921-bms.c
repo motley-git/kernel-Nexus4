@@ -1858,8 +1858,10 @@ static int adjust_soc(struct pm8921_bms_chip *chip, int soc,
 	soc = soc_new;
 
 out:
-	pr_info("ibat_ua = %d, vbat_uv = %d, soc = %d, batt_temp=%d\n",
+	if (batt_temp > 320) {
+		pr_info("ibat_ua = %d, vbat_uv = %d, soc = %d, batt_temp=%d\n",
 			ibat_ua, vbat_uv, soc, batt_temp);
+	}
 
 	return soc;
 }
