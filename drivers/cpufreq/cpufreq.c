@@ -1788,16 +1788,6 @@ static int __cpufreq_set_policy(struct cpufreq_policy *data,
 				struct cpufreq_policy *policy)
 {
 	int ret = 0;
-	
-	/* motley - tame touchboost request from powerhal/mpdecision to boost only one CPU instead of two
-	 * touchboost is currently targeting 1.026GHz step
-	 * ToDo:: need to come back later and use global variables here for the freqs in case they change
-	*/
-	if (policy->min >= 1026000) {
-		if (policy->cpu > 0 ) {
-			policy->min = 304000;
-		}
-	}
 
 	pr_debug("setting new policy for CPU %u: %u - %u kHz\n", policy->cpu,
 		policy->min, policy->max);
