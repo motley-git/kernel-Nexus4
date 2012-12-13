@@ -67,6 +67,17 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 	int ret = 0;
 	struct cpufreq_freqs freqs;
 	struct cpu_freq *limit = &per_cpu(cpu_freq_info, policy->cpu);
+	struct cpufreq_policy master_policy;
+
+	/* Use CPU 0 as the master to cap other cores being controlled by mpdecision when the max freq is lowered in userspace */
+	if (policy->cpu > 0) {
+		ret = cpufreq_get_policy(&master_policy, 0);
+		if (ret == 0) {
+			if (new_freq > master_policy.max) {
+				new_freq = master_policy.max;
+			}
+		}
+	}
 
 	if (limit->limits_init) {
 		if (new_freq > limit->allowed_max) {
