@@ -77,7 +77,7 @@ static unsigned long go_hispeed_load;
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_MIN_SAMPLE_TIME (60 * USEC_PER_MSEC)
+#define DEFAULT_MIN_SAMPLE_TIME (40 * USEC_PER_MSEC)
 static unsigned long min_sample_time;
 
 /*
@@ -97,7 +97,7 @@ static unsigned long above_hispeed_delay_val;
  * Boost pulse to hispeed on touchscreen input.
  */
 
-static int input_boost_val;
+static int input_boost_val = 1;
 
 struct cpufreq_interactive_inputopen {
 	struct input_handle *handle;
