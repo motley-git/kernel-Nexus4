@@ -34,6 +34,7 @@ static int limit_idx;
 static int limit_idx_low;
 static int limit_idx_high;
 static struct cpufreq_frequency_table *table;
+#define thermal_debug	0
 
 static int msm_thermal_get_freq_table(void)
 {
@@ -80,18 +81,35 @@ static int update_cpu_max_freq(int cpu, uint32_t max_freq)
 static void check_temp(struct work_struct *work)
 {
 	static int limit_init;
-	struct tsens_device tsens_dev;
+	struct tsens_device tsens_dev1;
+	struct tsens_device tsens_dev2;
 	unsigned long temp = 0;
+	unsigned long temp2 = 0;
 	uint32_t max_freq = limited_max_freq;
 	int cpu = 0;
 	int ret = 0;
 
-	tsens_dev.sensor_num = msm_thermal_info.sensor_id;
-	ret = tsens_get_temp(&tsens_dev, &temp);
+	tsens_dev1.sensor_num = msm_thermal_info.sensor_id;
+	tsens_dev2.sensor_num = 1;
+
+	ret = tsens_get_temp(&tsens_dev1, &temp);
 	if (ret) {
-		pr_debug("msm_thermal: Unable to read TSENS sensor %d\n",
-				tsens_dev.sensor_num);
+		if (thermal_debug)
+			pr_info("msm_thermal: Unable to read TSENS sensor %d\n",
+				tsens_dev1.sensor_num);
 		goto reschedule;
+	}
+
+	ret = tsens_get_temp(&tsens_dev2, &temp2);
+	if (ret) {
+		if (thermal_debug)
+			pr_info("msm_thermal: Unable to read TSENS sensor %d\n",
+						tsens_dev2.sensor_num);
+	} else {
+		if (thermal_debug)
+			pr_info("msm_thermal: temp s0: %lu, temp s1: %lu\n", temp,temp2);
+		temp = max(temp, temp2);
+
 	}
 
 	if (!limit_init) {
@@ -110,6 +128,8 @@ static void check_temp(struct work_struct *work)
 		if (limit_idx < limit_idx_low)
 			limit_idx = limit_idx_low;
 		max_freq = table[limit_idx].frequency;
+		if (thermal_debug)
+			pr_info("msm_thermal: temp %lu\n", temp);
 	} else if (temp < msm_thermal_info.limit_temp_degC -
 		 msm_thermal_info.temp_hysteresis_degC) {
 		if (limit_idx == limit_idx_high)
