@@ -88,6 +88,7 @@ static void check_temp(struct work_struct *work)
 	uint32_t max_freq = limited_max_freq;
 	int cpu = 0;
 	int ret = 0;
+	int near_limit = 0;
 
 	tsens_dev1.sensor_num = msm_thermal_info.sensor_id;
 	tsens_dev2.sensor_num = 1;
@@ -119,7 +120,11 @@ static void check_temp(struct work_struct *work)
 		else
 			limit_init = 1;
 	}
-
+	if (temp > msm_thermal_info.limit_temp_degC - msm_thermal_info.temp_hysteresis_degC) {
+		near_limit = 1;
+	} else {
+		near_limit = 0;		
+	}
 	if (temp >= msm_thermal_info.limit_temp_degC) {
 		if (limit_idx == limit_idx_low)
 			goto reschedule;
@@ -128,8 +133,7 @@ static void check_temp(struct work_struct *work)
 		if (limit_idx < limit_idx_low)
 			limit_idx = limit_idx_low;
 		max_freq = table[limit_idx].frequency;
-		if (thermal_debug)
-			pr_info("msm_thermal: temp %lu\n", temp);
+		pr_info("msm_thermal: limit exceeded curr temp:%lu, new freq:%d\n", temp,max_freq);
 	} else if (temp < msm_thermal_info.limit_temp_degC -
 		 msm_thermal_info.temp_hysteresis_degC) {
 		if (limit_idx == limit_idx_high)
@@ -154,9 +158,15 @@ static void check_temp(struct work_struct *work)
 	}
 
 reschedule:
-	if (enabled)
-		schedule_delayed_work(&check_temp_work,
-				msecs_to_jiffies(msm_thermal_info.poll_ms));
+	if (enabled) {
+		if (near_limit) {
+			schedule_delayed_work(&check_temp_work,
+							msecs_to_jiffies(250));
+		} else {
+			schedule_delayed_work(&check_temp_work,
+							msecs_to_jiffies(msm_thermal_info.poll_ms));
+		}
+	}
 }
 
 static void disable_msm_thermal(void)
