@@ -38,9 +38,6 @@ static int active_count;
 
 extern void hotplug_boostpulse(void);
 
-/* Default boostpulse frequency */
-#define DEFAULT_BOOSTPULSE_FREQ 1296000
-
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;
 	struct timer_list cpu_slack_timer;
@@ -68,7 +65,7 @@ static spinlock_t speedchange_cpumask_lock;
 static struct mutex gov_lock;
 
 /* Hi speed to bump to from lo speed when load burst (default max) */
-static unsigned int hispeed_freq = DEFAULT_BOOSTPULSE_FREQ;
+static unsigned int hispeed_freq;
 
 /* Go to hi speed when CPU load at or above this value. */
 #define DEFAULT_GO_HISPEED_LOAD 99
