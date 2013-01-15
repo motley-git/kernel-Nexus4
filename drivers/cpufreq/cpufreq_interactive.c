@@ -36,8 +36,6 @@
 
 static int active_count;
 
-extern void hotplug_boostpulse(void);
-
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;
 	struct timer_list cpu_slack_timer;
@@ -516,12 +514,10 @@ static void cpufreq_interactive_boost(void)
 {
 	int i;
 	int anyboost = 0;
-	int boostcount = 0;
 	unsigned long flags;
 	struct cpufreq_interactive_cpuinfo *pcpu;
 
 	spin_lock_irqsave(&speedchange_cpumask_lock, flags);
-	hotplug_boostpulse();
 	for_each_online_cpu(i) {
 		pcpu = &per_cpu(cpuinfo, i);
 		if (pcpu->target_freq < hispeed_freq) {
@@ -530,7 +526,6 @@ static void cpufreq_interactive_boost(void)
 			pcpu->hispeed_validate_time =
 				ktime_to_us(ktime_get());
 			anyboost = 1;
-			boostcount++;
 		}
 
 		/*
@@ -540,9 +535,6 @@ static void cpufreq_interactive_boost(void)
 
 		pcpu->floor_freq = hispeed_freq;
 		pcpu->floor_validate_time = ktime_to_us(ktime_get());
-
-		if (boostcount > 1)
-			break;
 	}
 
 	spin_unlock_irqrestore(&speedchange_cpumask_lock, flags);
