@@ -37,6 +37,11 @@
 
 static atomic_t active_count = ATOMIC_INIT(0);
 
+extern void hotplug_boostpulse(void);
+
+/* Default boostpulse frequency */
+#define DEFAULT_BOOSTPULSE_FREQ 1026000
+
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;
 	int timer_idlecancel;
@@ -68,7 +73,7 @@ static spinlock_t down_cpumask_lock;
 static struct mutex set_speed_lock;
 
 /* Hi speed to bump to from lo speed when load burst (default max) */
-static u64 hispeed_freq;
+static u64 hispeed_freq = DEFAULT_BOOSTPULSE_FREQ;
 
 /* Go to hi speed when CPU load at or above this value. */
 #define DEFAULT_GO_HISPEED_LOAD 80
@@ -77,7 +82,7 @@ static unsigned long go_hispeed_load;
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_MIN_SAMPLE_TIME (40 * USEC_PER_MSEC)
+#define DEFAULT_MIN_SAMPLE_TIME (60 * USEC_PER_MSEC)
 static unsigned long min_sample_time;
 
 /*
@@ -90,8 +95,8 @@ static unsigned long timer_rate;
  * Wait this long before raising speed above hispeed, by default a single
  * timer interval.
  */
-#define DEFAULT_ABOVE_HISPEED_DELAY DEFAULT_TIMER_RATE
-static unsigned long above_hispeed_delay_val;
+#define DEFAULT_ABOVE_HISPEED_DELAY (30 * USEC_PER_MSEC)
+static unsigned long above_hispeed_delay_val = DEFAULT_ABOVE_HISPEED_DELAY;
 
 /*
  * Boost pulse to hispeed on touchscreen input.
@@ -495,9 +500,12 @@ static void cpufreq_interactive_boost(void)
 {
 	int i;
 	int anyboost = 0;
+	int boostcount = 0;
 	unsigned long flags;
 	struct cpufreq_interactive_cpuinfo *pcpu;
-
+	
+	hotplug_boostpulse();
+	
 	spin_lock_irqsave(&up_cpumask_lock, flags);
 
 	for_each_online_cpu(i) {
@@ -510,6 +518,7 @@ static void cpufreq_interactive_boost(void)
 				get_cpu_idle_time_us(i, &pcpu->target_set_time);
 			pcpu->hispeed_validate_time = pcpu->target_set_time;
 			anyboost = 1;
+			boostcount++;
 		}
 
 		/*
@@ -519,6 +528,9 @@ static void cpufreq_interactive_boost(void)
 
 		pcpu->floor_freq = hispeed_freq;
 		pcpu->floor_validate_time = ktime_to_us(ktime_get());
+		
+		if (boostcount > 1)
+			break;
 	}
 
 	spin_unlock_irqrestore(&up_cpumask_lock, flags);
