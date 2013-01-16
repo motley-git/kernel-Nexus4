@@ -39,7 +39,7 @@ static int active_count;
 extern void hotplug_boostpulse(void);
 
 /* Default boostpulse frequency */
-#define DEFAULT_BOOSTPULSE_FREQ 1296000
+#define DEFAULT_BOOSTPULSE_FREQ 1242000
 
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;
@@ -84,7 +84,7 @@ static int ntarget_loads = ARRAY_SIZE(default_target_loads);
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_MIN_SAMPLE_TIME (40 * USEC_PER_MSEC)
+#define DEFAULT_MIN_SAMPLE_TIME (50 * USEC_PER_MSEC)
 static unsigned long min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
 
 /*
@@ -523,8 +523,10 @@ static void cpufreq_interactive_boost(void)
 	unsigned long flags;
 	struct cpufreq_interactive_cpuinfo *pcpu;
 
-	spin_lock_irqsave(&speedchange_cpumask_lock, flags);
 	hotplug_boostpulse();
+
+	spin_lock_irqsave(&speedchange_cpumask_lock, flags);
+
 	for_each_online_cpu(i) {
 		pcpu = &per_cpu(cpuinfo, i);
 		if (pcpu->target_freq < hispeed_freq) {
