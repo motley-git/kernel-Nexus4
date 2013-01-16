@@ -92,9 +92,7 @@ static int __init display_kcal_setup(char *kcal)
 	if (vaild_k != 'K') {
 		pr_info("kcal not calibrated yet : %d\n", vaild_k);
 		kcal_r = kcal_g = kcal_b = 255;
-		//let's tweak a bit to get rid of the greenish yellow tint
-		kcal_g = 247;
-		pr_info("RGB set to default : %d %d %d\n", kcal_r, kcal_g, kcal_b);
+		pr_info("set to default : %d\n", kcal_r);
 	}
 
 	kcal_set_values(kcal_r, kcal_g, kcal_b);
