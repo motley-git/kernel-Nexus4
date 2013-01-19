@@ -46,10 +46,10 @@ static DEFINE_MUTEX(emergency_shutdown_mutex);
  * SHUTDOWN_TEMP - max temp in C where CPU will shut down
  * COOL_TEMP - temp in C where where we can slow down polling
  * COOL_TEMP_OFFSET_MS - number of ms to add to polling time when temps are cool
- * HOT_TEMP_OFFSET_MS - number of ms to subtract from polling time when temps are cool
+ * HOT_TEMP_OFFSET_MS - number of ms to subtract from polling time when temps are hot
  * */
 
-#define DEFAULT_THROTTLE_TEMP	64
+#define DEFAULT_THROTTLE_TEMP	67
 #define MAX_THROTTLE_TEMP		74
 #define SHUTDOWN_TEMP			80
 #define COOL_TEMP				40
@@ -190,12 +190,12 @@ reschedule:
 		if (temp > COOL_TEMP) {
 			if (near_limit) {
 				if (thermal_debug)
-					pr_info("msm_thermal: throttle temp is near, polling at %dms\n",msm_thermal_info.poll_ms + HOT_TEMP_OFFSET_MS);
+					pr_info("msm_thermal: throttle temp is near, polling at %dms\n",msm_thermal_info.poll_ms - HOT_TEMP_OFFSET_MS);
 				schedule_delayed_work(&check_temp_work,
 						msecs_to_jiffies(msm_thermal_info.poll_ms - HOT_TEMP_OFFSET_MS));
 			} else {
 				if (thermal_debug)
-					pr_info("msm_thermal: CPU temp is fine, polling at %dms\n",msm_thermal_info.poll_ms + HOT_TEMP_OFFSET_MS);
+					pr_info("msm_thermal: CPU temp is fine, polling at %dms\n",msm_thermal_info.poll_ms);
 				schedule_delayed_work(&check_temp_work,
 						msecs_to_jiffies(msm_thermal_info.poll_ms));
 			}
