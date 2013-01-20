@@ -108,6 +108,9 @@ struct ci13xxx_ep {
 	struct device                         *device;
 	struct dma_pool                       *td_pool;
 	unsigned long dTD_update_fail_count;
+	unsigned long			      prime_fail_count;
+	int				      prime_timer_count;
+	struct timer_list		      prime_timer;
 };
 
 struct ci13xxx;
@@ -127,6 +130,8 @@ struct ci13xxx_udc_driver {
 #define CI13XXX_CONTROLLER_REMOTE_WAKEUP_EVENT	3
 #define CI13XXX_CONTROLLER_RESUME_EVENT	        4
 #define CI13XXX_CONTROLLER_DISCONNECT_EVENT	    5
+#define CI13XXX_CONTROLLER_UDC_STARTED_EVENT	    6
+
 	void	(*notify_event) (struct ci13xxx *udc, unsigned event);
 };
 

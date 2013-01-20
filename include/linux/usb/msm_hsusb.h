@@ -378,8 +378,18 @@ struct msm_otg {
 struct msm_hsic_host_platform_data {
 	unsigned strobe;
 	unsigned data;
+	bool ignore_cal_pad_config;
+	int strobe_pad_offset;
+	int data_pad_offset;
+
 	struct msm_bus_scale_pdata *bus_scale_table;
 	unsigned log2_irq_thresh;
+
+	/*swfi latency is required while driving resume on to the bus */
+	u32 swfi_latency;
+
+	/*standalone latency is required when HSCI is active*/
+	u32 standalone_latency;
 };
 
 struct msm_usb_host_platform_data {
@@ -444,6 +454,15 @@ enum usb_bam {
 	HSUSB_BAM = 0,
 	HSIC_BAM,
 };
+
+#ifdef CONFIG_USB_CI13XXX_MSM
+void msm_hw_bam_disable(bool bam_disable);
+
+#else
+static inline void msm_hw_bam_disable(bool bam_disable)
+{
+}
+#endif
 
 #ifdef CONFIG_USB_DWC3_MSM
 int msm_ep_config(struct usb_ep *ep);

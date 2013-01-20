@@ -87,73 +87,35 @@ static int rmnet_usb_suspend(struct usb_interface *iface, pm_message_t message)
 {
 	struct usbnet		*unet;
 	struct rmnet_ctrl_dev	*dev;
-	int			time = 0;
-	int			retval = 0;
 
 	unet = usb_get_intfdata(iface);
-	if (!unet) {
-		pr_err("%s:data device not found\n", __func__);
-		retval = -ENODEV;
-		goto fail;
-	}
 
 	dev = (struct rmnet_ctrl_dev *)unet->data[1];
-	if (!dev) {
-		dev_err(&iface->dev, "%s: ctrl device not found\n",
-				__func__);
-		retval = -ENODEV;
-		goto fail;
-	}
 
-	retval = usbnet_suspend(iface, message);
-	if (!retval) {
-		if (message.event & PM_EVENT_SUSPEND) {
-			time = usb_wait_anchor_empty_timeout(&dev->tx_submitted,
-								1000);
-			if (!time)
-				usb_kill_anchored_urbs(&dev->tx_submitted);
+	if (work_busy(&dev->get_encap_work))
+		return -EBUSY;
+	
+	if (usbnet_suspend(iface, message))
+		return -EBUSY;
 
-			retval = rmnet_usb_ctrl_stop_rx(dev);
-			iface->dev.power.power_state.event = message.event;
-		}
-		/*  TBD : do we need to set/clear usbnet->udev->reset_resume*/
-		} else
-		dev_dbg(&iface->dev,
-			"%s: device is busy can not suspend\n", __func__);
+	usb_kill_anchored_urbs(&dev->rx_submitted);
 
-fail:
-	return retval;
+	return 0;
 }
-
+	
 static int rmnet_usb_resume(struct usb_interface *iface)
 {
 	int			retval = 0;
-	int			oldstate;
 	struct usbnet		*unet;
 	struct rmnet_ctrl_dev	*dev;
 
 	unet = usb_get_intfdata(iface);
-	if (!unet) {
-		pr_err("%s:data device not found\n", __func__);
-		retval = -ENODEV;
-		goto fail;
-	}
 
 	dev = (struct rmnet_ctrl_dev *)unet->data[1];
-	if (!dev) {
-		dev_err(&iface->dev, "%s: ctrl device not found\n", __func__);
-		retval = -ENODEV;
-		goto fail;
-	}
-	oldstate = iface->dev.power.power_state.event;
-	iface->dev.power.power_state.event = PM_EVENT_ON;
 
-	retval = usbnet_resume(iface);
-	if (!retval) {
-		if (oldstate & PM_EVENT_SUSPEND)
-			retval = rmnet_usb_ctrl_start_rx(dev);
-	}
-fail:
+	usbnet_resume(iface);
+	retval = rmnet_usb_ctrl_start_rx(dev);
+	
 	return retval;
 }
 
@@ -564,10 +526,6 @@ static int rmnet_usb_probe(struct usb_interface *iface,
 		/* allow modem and roothub to wake up suspended system */
 		device_set_wakeup_enable(&udev->dev, 1);
 		device_set_wakeup_enable(&udev->parent->dev, 1);
-
-		/* set default autosuspend timeout for modem and roothub */
-		pm_runtime_set_autosuspend_delay(&udev->dev, 1000);
-		pm_runtime_set_autosuspend_delay(&udev->parent->dev, 200);
 	}
 
 out:
