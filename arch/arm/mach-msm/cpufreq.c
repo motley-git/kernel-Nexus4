@@ -315,6 +315,8 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 
 	policy->cur = cur_freq;
 
+	policy->max = 1512000;  //limit max to stock frequency at boot
+
 	policy->cpuinfo.transition_latency =
 		acpuclk_get_switch_time() * NSEC_PER_USEC;
 #ifdef CONFIG_SMP
