@@ -31,19 +31,17 @@
  * Controls
  * DEFAULT_THROTTLE_TEMP - default throttle temp at boot time
  * MAX_THROTTLE_TEMP - max able to be set by user
- * SHUTDOWN_TEMP - max temp in C where CPU will shut down
  * COOL_TEMP - temp in C where where we can slow down polling
  * COOL_TEMP_OFFSET_MS - number of ms to add to polling time when temps are cool
  * HOT_TEMP_OFFSET_MS - number of ms to subtract from polling time when temps are hot
  * DEFAULT_MIN_FREQ_INDEX - frequency table index for the lowest frequency to drop to during throttling
  * */
-#define DEFAULT_THROTTLE_TEMP		67
-#define MAX_THROTTLE_TEMP			75
-#define SHUTDOWN_TEMP				85
-#define COOL_TEMP					40
+#define DEFAULT_THROTTLE_TEMP		70
+#define MAX_THROTTLE_TEMP			80
+#define COOL_TEMP					45
 #define COOL_TEMP_OFFSET_MS			250
 #define HOT_TEMP_OFFSET_MS			250
-#define DEFAULT_MIN_FREQ_INDEX		6
+#define DEFAULT_MIN_FREQ_INDEX		7
 
 static int enabled;
 static struct msm_thermal_data msm_thermal_info;
@@ -58,7 +56,6 @@ static bool throttle_on = false;
 static unsigned int throttle_temp = DEFAULT_THROTTLE_TEMP;
 
 static struct cpufreq_frequency_table *table;
-static DEFINE_MUTEX(emergency_shutdown_mutex);
 
 static int msm_thermal_get_freq_table(void)
 {
@@ -133,18 +130,21 @@ static void check_temp(struct work_struct *work)
 		else
 			limit_init = 1;
 	}
-
-	/* call for shutdown - if it doesn't work at least set lowest frequency */
-	if (temp >= SHUTDOWN_TEMP) {
-		mutex_lock(&emergency_shutdown_mutex);
-		pr_warn("msm_thermal: ***SHUTDOWN TEMP REACHED: %dC ORDERLY POWEROFF STARTED***\n", SHUTDOWN_TEMP);
-		orderly_poweroff(true);
-		max_freq = table[min_freq_index].frequency;
-		mutex_unlock(&emergency_shutdown_mutex);
+	
+	/* max throttle exceeded - go direct to teh low step until it is under control */
+	if (temp >= MAX_THROTTLE_TEMP) {
+		poll_faster = 1;
+		if (thermal_debug && throttle_on == true)
+			pr_info("msm_thermal: throttling - CPU temp is %luC, max freq: %dMHz\n",temp, max_freq);
+		limit_idx = min_freq_index;
+		max_freq = table[limit_idx].frequency;
+		if (throttle_on == false)
+			pr_info("msm_thermal: throttling ON - threshold temp %dC reached, CPU temp is %luC\n", throttle_temp, temp);
+		throttle_on = true;
 		goto setmaxfreq;
 	}
-	
-	/* out of the warning track - back to max and poll slower */
+
+	/* temp is OK */
 	if (temp < throttle_temp - msm_thermal_info.temp_hysteresis_degC) {
 		if (throttle_on == true)
 			pr_info("msm_thermal: throttling OFF, CPU temp is %luC\n", temp);
