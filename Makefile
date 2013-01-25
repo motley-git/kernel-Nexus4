@@ -358,7 +358,6 @@ CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
-
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
 LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
@@ -373,11 +372,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks -mno-unaligned-access \
-		   -march=armv7-a -mtune=cortex-a15 \
-		   -fpredictive-commoning -fgcse-after-reload -ftree-vectorize \
-		   -fipa-cp-clone -fsingle-precision-constant -pipe \
-		   -funswitch-loops -floop-interchange \
-		   -floop-strip-mine -floop-block
+		   -mcpu=cortex-a9 -march=armv7-a -mfpu=neon-vfpv4 -funsafe-math-optimizations \
+		   -fsingle-precision-constant -fpredictive-commoning -fipa-cp-clone \
+		   -fgcse-after-reload -ftree-vectorize -pipe -O2
+
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
