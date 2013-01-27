@@ -72,7 +72,7 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd;
 	int ret = 0;
-
+	int i = 0;
 	pr_info("%s started\n", __func__);
 
 	mfd = platform_get_drvdata(pdev);
@@ -81,9 +81,14 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 	if (mfd->key != MFD_KEY)
 		return -EINVAL;
 
+	for (i=1; i<10; i++) {
+		pr_info("%s: original red %d = %d\n", __func__, i, faux123_power_on_set_1[5].payload[i]);
+		pr_info("%s: original green %d = %d\n", __func__, i, faux123_power_on_set_1[7].payload[i]);
+		pr_info("%s: original blue %d = %d\n", __func__, i, faux123_power_on_set_1[9].payload[i]);
+	}
+
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x10000000);
 	ret = mipi_dsi_cmds_tx(&lgit_tx_buf,
-//			mipi_lgit_pdata->power_on_set_1,
 			faux123_power_on_set_1,
 			mipi_lgit_pdata->power_on_set_size_1);
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000);
@@ -186,6 +191,7 @@ static void mipi_lgit_set_backlight_board(struct msm_fb_data_type *mfd)
 	mipi_lgit_pdata->backlight_level(level, 0, 0);
 }
 
+/******************* begin faux123 sysfs interface *******************/
 static bool calc_checksum(int intArr[]) {
 	int i = 0;
 	unsigned char chksum = 0;
@@ -196,12 +202,10 @@ static bool calc_checksum(int intArr[]) {
 	if (chksum == (unsigned char)intArr[0]) {
 		return true;
 	} else {
-		//pr_info("expecting %d, got this %d instead!", chksum, intArr[0]);
+		pr_info("expecting %d, got %d instead!", chksum, intArr[0]);
 		return false;
 	}
 }
-
-/******************* begin sysfs interface *******************/
 
 static ssize_t kgamma_r_store(struct device *dev, struct device_attribute *attr,
 						const char *buf, size_t count)
@@ -217,13 +221,13 @@ static ssize_t kgamma_r_store(struct device *dev, struct device_attribute *attr,
 	if (calc_checksum(kgamma)) {
 		kgamma[0] = 0xd0;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_r_p [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_r_p [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[5].payload[i] = kgamma[i];
 		}
 
 		kgamma[0] = 0xd1;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_r_n [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_r_n [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[6].payload[i] = kgamma[i];
 		}
 	}
@@ -259,13 +263,13 @@ static ssize_t kgamma_g_store(struct device *dev, struct device_attribute *attr,
 	if (calc_checksum(kgamma)) {
 		kgamma[0] = 0xd2;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_g_p [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_g_p [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[7].payload[i] = kgamma[i];
 		}
 
 		kgamma[0] = 0xd3;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_g_n [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_g_n [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[8].payload[i] = kgamma[i];
 		}
 	}
@@ -301,13 +305,13 @@ static ssize_t kgamma_b_store(struct device *dev, struct device_attribute *attr,
 	if (calc_checksum(kgamma)) {
 		kgamma[0] = 0xd4;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_b_p [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_b_p [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[9].payload[i] = kgamma[i];
 		}
 
 		kgamma[0] = 0xd5;
 		for (i=0; i<10; i++) {
-			//pr_info("kgamma_b_n [%d] => %d \n", i, kgamma[i]);
+			pr_info("kgamma_b_n [%d] => %d \n", i, kgamma[i]);
 			faux123_power_on_set_1[10].payload[i] = kgamma[i];
 		}
 	}
@@ -332,6 +336,7 @@ static ssize_t kgamma_b_show(struct device *dev, struct device_attribute *attr,
 static ssize_t kgamma_ctrl_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
+	pr_info("kgamma_ctrl count: %d\n", count);
 	return count;
 }
 
@@ -345,8 +350,170 @@ static DEVICE_ATTR(kgamma_r, 0644, kgamma_r_show, kgamma_r_store);
 static DEVICE_ATTR(kgamma_g, 0644, kgamma_g_show, kgamma_g_store);
 static DEVICE_ATTR(kgamma_b, 0644, kgamma_b_show, kgamma_b_store);
 static DEVICE_ATTR(kgamma_ctrl, 0644, kgamma_ctrl_show, kgamma_ctrl_store);
+/******************* end faux123 sysfs interface *******************/
 
-/******************* end sysfs interface *******************/
+/******************* motley generic sysfs interface ********************/
+static bool calc_checksum_generic(unsigned int intArr[]) {
+	int i = 0;
+	unsigned int chksum = 0;
+
+	for (i=1; i<10; i++)
+		chksum += intArr[i];
+
+	if (chksum == intArr[0]) {
+		return true;
+	} else {
+		pr_info("expecting %d, got %d instead!", chksum, intArr[0]);
+		return false;
+	}
+}
+
+static ssize_t kgamma_red_store(struct device *dev, struct device_attribute *attr,
+						const char *buf, size_t count)
+{
+	unsigned int kgamma[10];
+	int i;
+
+	sscanf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		&kgamma[0], &kgamma[1], &kgamma[2], &kgamma[3],
+		&kgamma[4], &kgamma[5], &kgamma[6], &kgamma[7],
+		&kgamma[8], &kgamma[9]);
+
+	if (calc_checksum_generic(kgamma)) {
+		kgamma[0] = 0xd0;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_r_p [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[5].payload[i] = (char)kgamma[i];
+		}
+
+		kgamma[0] = 0xd1;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_r_n [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[6].payload[i] = (char)kgamma[i];
+		}
+	}
+	return count;
+}
+
+static ssize_t kgamma_red_show(struct device *dev, struct device_attribute *attr,
+								char *buf)
+{
+	unsigned int kgamma[10];
+	int i;
+	unsigned int check_sum =0;
+
+	for (i=1; i<10; i++) {
+		kgamma[i] = (unsigned int)faux123_power_on_set_1[5].payload[i];
+		check_sum += kgamma[i];
+	}
+
+	kgamma[0] = check_sum;
+
+	return sprintf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		kgamma[0], kgamma[1], kgamma[2], kgamma[3],
+		kgamma[4], kgamma[5], kgamma[6], kgamma[7],
+		kgamma[8], kgamma[9]);
+}
+
+static ssize_t kgamma_green_store(struct device *dev, struct device_attribute *attr,
+						const char *buf, size_t count)
+{
+	unsigned int kgamma[10];
+	int i;
+
+	sscanf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		&kgamma[0], &kgamma[1], &kgamma[2], &kgamma[3],
+		&kgamma[4], &kgamma[5], &kgamma[6], &kgamma[7],
+		&kgamma[8], &kgamma[9]);
+
+	if (calc_checksum_generic(kgamma)) {
+		kgamma[0] = 0xd2;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_g_p [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[7].payload[i] = (char)kgamma[i];
+		}
+
+		kgamma[0] = 0xd3;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_g_n [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[8].payload[i] = (char)kgamma[i];
+		}
+	}
+	return count;
+}
+
+static ssize_t kgamma_green_show(struct device *dev, struct device_attribute *attr,
+								char *buf)
+{
+	unsigned int kgamma[10];
+	int i;
+	unsigned int check_sum =0;
+
+	for (i=1; i<10; i++) {
+		kgamma[i] = (unsigned int)faux123_power_on_set_1[7].payload[i];
+		check_sum += kgamma[i];
+	}
+
+	kgamma[0] = check_sum;
+
+	return sprintf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		kgamma[0], kgamma[1], kgamma[2], kgamma[3],
+		kgamma[4], kgamma[5], kgamma[6], kgamma[7],
+		kgamma[8], kgamma[9]);
+}
+
+static ssize_t kgamma_blue_store(struct device *dev, struct device_attribute *attr,
+						const char *buf, size_t count)
+{
+	unsigned int kgamma[10];
+	int i;
+
+	sscanf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		&kgamma[0], &kgamma[1], &kgamma[2], &kgamma[3],
+		&kgamma[4], &kgamma[5], &kgamma[6], &kgamma[7],
+		&kgamma[8], &kgamma[9]);
+
+	if (calc_checksum_generic(kgamma)) {
+		kgamma[0] = 0xd4;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_b_p [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[9].payload[i] = (char)kgamma[i];
+		}
+
+		kgamma[0] = 0xd5;
+		for (i=0; i<10; i++) {
+			pr_info("kgamma_b_n [%d] => %d \n", i, kgamma[i]);
+			faux123_power_on_set_1[10].payload[i] = (char)kgamma[i];
+		}
+	}
+	return count;
+}
+
+static ssize_t kgamma_blue_show(struct device *dev, struct device_attribute *attr,
+								char *buf)
+{
+	unsigned int kgamma[10];
+	int i;
+	unsigned int check_sum =0;
+
+	for (i=1; i<10; i++) {
+		kgamma[i] = (unsigned int)faux123_power_on_set_1[9].payload[i];
+		check_sum += kgamma[i];
+	}
+
+	kgamma[0] = check_sum;
+
+	return sprintf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		kgamma[0], kgamma[1], kgamma[2], kgamma[3],
+		kgamma[4], kgamma[5], kgamma[6], kgamma[7],
+		kgamma[8], kgamma[9]);
+}
+
+static DEVICE_ATTR(kgamma_red, 0644, kgamma_red_show, kgamma_red_store);
+static DEVICE_ATTR(kgamma_green, 0644, kgamma_green_show, kgamma_green_store);
+static DEVICE_ATTR(kgamma_blue, 0644, kgamma_blue_show, kgamma_blue_store);
+
+/******************* end motley generic sysfs interface ********************/
 
 static int mipi_lgit_lcd_probe(struct platform_device *pdev)
 {
@@ -358,7 +525,7 @@ static int mipi_lgit_lcd_probe(struct platform_device *pdev)
 	}
 
 	// make a copy of platform data
-	memcpy((void*)faux123_power_on_set_1, (void*)mipi_lgit_pdata->power_on_set_1, 
+	memcpy((void*)faux123_power_on_set_1, (void*)mipi_lgit_pdata->power_on_set_1,
 		sizeof(faux123_power_on_set_1));
 
 	pr_info("%s start\n", __func__);
@@ -366,18 +533,30 @@ static int mipi_lgit_lcd_probe(struct platform_device *pdev)
 	skip_init = true;
 	msm_fb_add_device(pdev);
 
+	/* faux123 gamma control */
 	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_r);
-		if(rc !=0)
-			return -1;
-		rc = device_create_file(&pdev->dev, &dev_attr_kgamma_g);
-		if(rc !=0)
-			return -1;
-		rc = device_create_file(&pdev->dev, &dev_attr_kgamma_b);
-		if(rc !=0)
-			return -1;
-		rc = device_create_file(&pdev->dev, &dev_attr_kgamma_ctrl);
-		if(rc !=0)
-			return -1;
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_g);
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_b);
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_ctrl);
+
+	/* motley generic gamma control */
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_red);
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_green);
+	if(rc !=0)
+		return -1;
+	rc = device_create_file(&pdev->dev, &dev_attr_kgamma_blue);
+	if(rc !=0)
+		return -1;
 
 	return 0;
 }
