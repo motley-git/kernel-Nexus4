@@ -72,7 +72,7 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd;
 	int ret = 0;
-	int i = 0;
+
 	pr_info("%s started\n", __func__);
 
 	mfd = platform_get_drvdata(pdev);
@@ -80,12 +80,6 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 		return -ENODEV;
 	if (mfd->key != MFD_KEY)
 		return -EINVAL;
-
-	for (i=1; i<10; i++) {
-		pr_info("%s: original red %d = %d\n", __func__, i, faux123_power_on_set_1[5].payload[i]);
-		pr_info("%s: original green %d = %d\n", __func__, i, faux123_power_on_set_1[7].payload[i]);
-		pr_info("%s: original blue %d = %d\n", __func__, i, faux123_power_on_set_1[9].payload[i]);
-	}
 
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x10000000);
 	ret = mipi_dsi_cmds_tx(&lgit_tx_buf,
