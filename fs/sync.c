@@ -17,6 +17,10 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
+#ifdef CONFIG_DYNAMIC_FSYNC
+extern bool early_suspend_active;
+#endif
+
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
 			SYNC_FILE_RANGE_WAIT_AFTER)
 
@@ -90,7 +94,7 @@ static void sync_one_sb(struct super_block *sb, void *arg)
  * Sync all the data for all the filesystems (called by sys_sync() and
  * emergency sync)
  */
-static void sync_filesystems(int wait)
+void sync_filesystems(int wait)
 {
 	iterate_supers(sync_one_sb, &wait);
 }
@@ -177,6 +181,10 @@ int vfs_fsync_range(struct file *file, loff_t start, loff_t end, int datasync)
 	if (!fsynccontrol_fsync_enabled())
 		return 0;
 #endif
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
+#endif
 	if (!file->f_op || !file->f_op->fsync)
 		return -EINVAL;
 	return file->f_op->fsync(file, start, end, datasync);
@@ -255,6 +263,10 @@ int generic_write_sync(struct file *file, loff_t pos, loff_t count)
 	if (!fsynccontrol_fsync_enabled())
 	    return 0;
 #endif
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
+#endif
 
 	if (!(file->f_flags & O_DSYNC) && !IS_SYNC(file->f_mapping->host))
 		return 0;
@@ -323,6 +335,10 @@ SYSCALL_DEFINE(sync_file_range)(int fd, loff_t offset, loff_t nbytes,
 #ifdef CONFIG_FSYNC_CONTROL
 	if (!fsynccontrol_fsync_enabled())
 	    return 0;
+#endif
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
 #endif
 
 	ret = -EINVAL;
@@ -413,6 +429,10 @@ SYSCALL_ALIAS(sys_sync_file_range, SyS_sync_file_range);
 SYSCALL_DEFINE(sync_file_range2)(int fd, unsigned int flags,
 				 loff_t offset, loff_t nbytes)
 {
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (!early_suspend_active)
+		return 0;
+#endif
 	return sys_sync_file_range(fd, offset, nbytes, flags);
 }
 #ifdef CONFIG_HAVE_SYSCALL_WRAPPERS
