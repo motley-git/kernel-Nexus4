@@ -20348,7 +20348,7 @@ WDT_AssignTransportDriverContext (void *pContext, void *pDTDriverContext)
  @see
  @return pointer to datapath context
 */
-WPT_INLINE void *
+void *
 WDT_GetTransportDriverContext (void *pContext)
 {
    WDI_ControlBlockType *pCB = (WDI_ControlBlockType *)pContext;

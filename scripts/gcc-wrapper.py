@@ -43,6 +43,20 @@ allowed_warnings = set([
     "alignment.c:327",
     "mmu.c:602",
     "return_address.c:62",
+    "swab.h:49",
+    "nf_tproxy_core.h:75",
+    "nf_tproxy_core.h:175",
+    "bapRsnTxRx.c:222",
+    "xc4000.c:1049",
+    "xc4000.c:1063",
+    "inet_hashtables.h:356",
+    "inet_hashtables.h:359",
+    "wlan_qct_wdi_ds.h:155",
+    "wlan_qct_wdi_ds.h:163",
+    "wlan_qct_wdi_ds_i.h:96",
+    "wlan_qct_wdi_ds_i.h:158",
+    "wlan_qct_wdi_ds_i.h:165",
+    "transport.c:653",
  ])
 
 # Capture the name of the object file, can find it.

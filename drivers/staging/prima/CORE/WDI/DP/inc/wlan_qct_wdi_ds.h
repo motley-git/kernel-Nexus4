@@ -152,7 +152,7 @@ typedef struct sPktMetaInfo
    } u;
 } WDI_DS_MetaInfoType;
 
-WPT_STATIC WPT_INLINE WDI_DS_RxMetaInfoType* WDI_DS_ExtractRxMetaData (wpt_packet *pFrame)
+WPT_STATIC WDI_DS_RxMetaInfoType* WDI_DS_ExtractRxMetaData (wpt_packet *pFrame)
 {
   WDI_DS_RxMetaInfoType * pRxMetadata =
     &((WDI_DS_MetaInfoType *)WPAL_PACKET_GET_METAINFO_POINTER(pFrame))->u.rxMetaInfo;
@@ -160,7 +160,7 @@ WPT_STATIC WPT_INLINE WDI_DS_RxMetaInfoType* WDI_DS_ExtractRxMetaData (wpt_packe
 }
 
 
-WPT_STATIC WPT_INLINE WDI_DS_TxMetaInfoType* WDI_DS_ExtractTxMetaData (wpt_packet *pFrame)
+WPT_STATIC WDI_DS_TxMetaInfoType* WDI_DS_ExtractTxMetaData (wpt_packet *pFrame)
 {
         WDI_DS_TxMetaInfoType * pTxMetadata =
                 &((WDI_DS_MetaInfoType *)WPAL_PACKET_GET_METAINFO_POINTER(pFrame))->u.txMetaInfo;
