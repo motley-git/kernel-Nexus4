@@ -59,7 +59,7 @@ allowed_warnings = set([
     "transport.c:653",
     "fsync_control.c:22",
     "err.h:24",
-    "mipi_lgit.c:600",
+    "mipi_lgit.c:590",
  ])
 
 # Capture the name of the object file, can find it.
