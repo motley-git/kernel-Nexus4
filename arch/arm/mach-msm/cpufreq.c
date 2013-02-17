@@ -67,6 +67,18 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 	int ret = 0;
 	struct cpufreq_freqs freqs;
 	struct cpu_freq *limit = &per_cpu(cpu_freq_info, policy->cpu);
+	//struct cpufreq_policy master_policy;
+
+	/* Use CPU 0 as the master to cap second two cores when the max freq is lowered in userspace */
+	/*if (policy->cpu > 1) {
+		ret = cpufreq_get_policy(&master_policy, 0);
+		if (ret == 0) {
+			if (new_freq > master_policy.user_policy.max) {
+				new_freq = master_policy.user_policy.max;
+			}
+			policy->user_policy.max = master_policy.user_policy.max;
+		}
+	}*/
 
 	if (limit->limits_init) {
 		if (new_freq > limit->allowed_max) {
@@ -303,6 +315,8 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 	}
 
 	policy->cur = cur_freq;
+
+	policy->max = 1512000;  //limit max to stock frequency at boot
 
 	policy->cpuinfo.transition_latency =
 		acpuclk_get_switch_time() * NSEC_PER_USEC;
