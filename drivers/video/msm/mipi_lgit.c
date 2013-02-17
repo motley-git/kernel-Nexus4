@@ -32,7 +32,17 @@ static struct dsi_buf lgit_tx_buf;
 static struct dsi_buf lgit_rx_buf;
 static int skip_init;
 
+#ifdef CONFIG_GAMMA_CONTROL
+static DEFINE_MUTEX(color_lock);
 struct dsi_cmd_desc new_color_vals[33];
+int get_whites(void);
+int get_mids(void);
+int get_blacks(void);
+int get_contrast(void);
+int get_brightness(void);
+int get_saturation(void);
+int get_greys(void);
+#endif
 
 #define DSV_ONBST 57
 
@@ -80,7 +90,11 @@ static int mipi_lgit_lcd_on(struct platform_device *pdev)
 
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x10000000);
 	ret = mipi_dsi_cmds_tx(&lgit_tx_buf,
+#ifdef CONFIG_GAMMA_CONTROL
 			new_color_vals,
+#else
+			mipi_lgit_pdata->power_on_set_1,
+#endif
 			mipi_lgit_pdata->power_on_set_size_1);
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000);
 	if (ret < 0) {
@@ -560,6 +574,64 @@ static DEVICE_ATTR(kgamma_green, 0644, kgamma_green_show, kgamma_green_store);
 static DEVICE_ATTR(kgamma_blue, 0644, kgamma_blue_show, kgamma_blue_store);
 
 /******************* end motley sysfs interface ********************/
+
+/******************* franco interface *****************************/
+
+#ifdef CONFIG_GAMMA_CONTROL
+void update_vals(int array_pos)
+{
+	int val = 0;
+	int ret = 0;
+	int i;
+
+	switch(array_pos) {
+		case 1:
+			val = get_greys();
+			break;
+		case 2:
+			val = get_mids();
+			break;
+		case 3:
+			val = get_blacks();
+			break;
+		case 5:
+			val = get_contrast();
+			break;
+		case 6:
+			val = get_brightness();
+			break;
+		case 7:
+			val = get_saturation();
+			break;
+		case 8:
+			val = get_whites();
+			break;
+		default:
+			pr_info("%s - Wrong value - abort.\n", __FUNCTION__);
+			return;
+	}
+	
+	for (i = 5; i <= 10; i++)
+		new_color_vals[i].payload[array_pos] = val;
+
+	pr_info("%s - Updating display GAMMA settings.\n", __FUNCTION__);
+	
+	mutex_lock(&color_lock);
+	msleep(20);
+	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x10000000);
+	ret = mipi_dsi_cmds_tx(&lgit_tx_buf,
+			new_color_vals,
+			mipi_lgit_pdata->power_on_set_size_1);
+	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000);
+	if (ret < 0)
+		pr_err("%s: failed to transmit power_on_set_1 cmds\n", __func__);
+	mutex_unlock(&color_lock);
+}
+
+EXPORT_SYMBOL(update_vals);
+#endif
+
+/******************* end franco interface *****************************/
 
 struct syscore_ops panel_syscore_ops = {
 	.shutdown = mipi_lgit_lcd_shutdown,
