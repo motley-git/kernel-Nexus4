@@ -836,7 +836,7 @@ static void __init bus_init(const struct l2_level *l2_level)
 
 #ifdef CONFIG_USERSPACE_VOLTAGE_CONTROL
 
-#define HFPLL_MIN_VDD		 800000
+#define HFPLL_MIN_VDD		 600000
 #define HFPLL_MAX_VDD		1300000
 
 ssize_t acpuclk_get_vdd_levels_str(char *buf) {
@@ -847,9 +847,11 @@ ssize_t acpuclk_get_vdd_levels_str(char *buf) {
 		mutex_lock(&driver_lock);
 
 		for (i = 0; drv.acpu_freq_tbl[i].speed.khz; i++) {
-			/* updated to use uv required by 8x60 architecture - faux123 */
-			len += sprintf(buf + len, "%8lu: %8d\n", drv.acpu_freq_tbl[i].speed.khz,
-				drv.acpu_freq_tbl[i].vdd_core );
+			if (drv.acpu_freq_tbl[i].use_for_scaling) {
+				/* updated to use uv required by 8x60 architecture - faux123 */
+				len += sprintf(buf + len, "%8lu: %8d\n", drv.acpu_freq_tbl[i].speed.khz,
+						drv.acpu_freq_tbl[i].vdd_core );
+			}
 		}
 
 		mutex_unlock(&driver_lock);
