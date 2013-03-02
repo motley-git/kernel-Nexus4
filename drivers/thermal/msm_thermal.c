@@ -326,7 +326,7 @@ module_param_cb(enabled, &module_ops_enabled, &enabled, 0775);
 MODULE_PARM_DESC(enabled, "msm_thermal enforce limit on cpu (Y/N)");
 
 module_param_cb(thermal_debug, &module_ops_debug, &thermal_debug, 0775);
-MODULE_PARM_DESC(enabled, "msm_thermal debug to kernel log (Y/N)");
+MODULE_PARM_DESC(thermal_debug, "msm_thermal debug to kernel log (Y/N)");
 
 module_param_cb(throttle_temp, &module_ops_thermal_temp, &throttle_temp, 0775);
 MODULE_PARM_DESC(throttle_temp, "msm_thermal throttle temperature (C)");
