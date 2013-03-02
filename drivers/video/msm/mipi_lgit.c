@@ -232,6 +232,11 @@ static bool calc_checksum(int intArr[]) {
 	int i = 0;
 	unsigned char chksum = 0;
 
+	if (intArr[5] > 31 || (intArr[6] > 31)) {
+		pr_info("gamma 0 and gamma 1 values can't be over 31, got %d %d instead!", intArr[5], intArr[6]);
+		return false;
+	}
+
 	for (i=1; i<10; i++) {
 		if (intArr[i] > 255) {
 			pr_info("color values  can't be over 255, got %d instead!", intArr[i]);
@@ -401,6 +406,11 @@ static DEVICE_ATTR(kgamma_ctrl, 0644, kgamma_ctrl_show, kgamma_ctrl_store);
 static bool calc_checksum_generic(unsigned int intArr[]) {
 	int i = 0;
 	unsigned int chksum = 0;
+
+	if (intArr[5] > 31 || (intArr[6] > 31)) {
+		pr_info("gamma 0 and gamma 1 values can't be over 31, got %d %d instead!", intArr[5], intArr[6]);
+		return false;
+	}
 
 	for (i=1; i<10; i++) {
 		if (intArr[i] > 255) {
