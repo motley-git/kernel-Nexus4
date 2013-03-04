@@ -45,23 +45,12 @@ struct lge_touch_attribute {
 				const char *buf, size_t count);
 };
 
-struct touch_control_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct lge_touch_data *ts, char *buf);
-	ssize_t (*store)(struct lge_touch_data *ts,
-				const char *buf, size_t count);
-};
-
 static int is_pressure;
 static int is_width_major;
 static int is_width_minor;
 
 #define LGE_TOUCH_ATTR(_name, _mode, _show, _store)               \
 	struct lge_touch_attribute lge_touch_attr_##_name =       \
-	__ATTR(_name, _mode, _show, _store)
-
-#define TOUCH_CONTROL_ATTR(_name, _mode, _show, _store)               \
-	struct touch_control_attribute touch_control_attr_##_name =       \
 	__ATTR(_name, _mode, _show, _store)
 
 /* Debug mask value
@@ -2202,7 +2191,7 @@ int touch_driver_register(struct touch_device_driver* driver)
 
 	touch_device_func = driver;
 
-	touch_wq = create_workqueue("touch_wq");
+	touch_wq = create_singlethread_workqueue("touch_wq");
 	if (!touch_wq) {
 		TOUCH_ERR_MSG("CANNOT create new workqueue\n");
 		ret = -ENOMEM;
